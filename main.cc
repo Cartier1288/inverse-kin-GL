@@ -50,7 +50,7 @@ int main(void) {
 	while(!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
-		glClearColor (0.0, 0.0, 0.0, 0.0);
+		glClearColor (0.5921, 0.5961, 0.5255, 1.0);
 		glClear (GL_COLOR_BUFFER_BIT);
 		glColor3f (1.0, 1.0, 1.0);
 		glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
