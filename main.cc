@@ -16,8 +16,10 @@ int main(void) {
 
 	glfwSetErrorCallback(glfw_error);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwDefaultWindowHints();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	GLFWwindow* window = glfwCreateWindow(1280, 720, "title :)", NULL, NULL);
 	if(!window) {
@@ -27,9 +29,11 @@ int main(void) {
 	}
 
 	glfwMakeContextCurrent(window);
+	glfwShowWindow(window);
+	glfwFocusWindow(window);
 
 
-	if(!gladLoadGL()) {
+	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cerr << "failed GLAD GL initialization" << std::endl;
 		return 1;
 	}
@@ -41,8 +45,11 @@ int main(void) {
 	glViewport(0,0,width,height);
 
 
+	glfwSwapInterval(1);
 
 	while(!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+
 		glClearColor (0.0, 0.0, 0.0, 0.0);
 		glClear (GL_COLOR_BUFFER_BIT);
 		glColor3f (1.0, 1.0, 1.0);
@@ -54,6 +61,8 @@ int main(void) {
 			glVertex3f (0.25, 0.75, 0.0);
 		glEnd();
 		glFlush();
+
+		glfwSwapBuffers(window);
 	}
 
 
