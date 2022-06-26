@@ -3,8 +3,24 @@
 
 #include <iostream>
 
+GLFWwindow* window = nullptr;
+
+
+void terminate(int code) {
+	glfwDestroyWindow(window);
+	glfwTerminate();
+
+	exit(code);
+}
+
 void glfw_error(int error, const char* description) {
 	std::cout << description << std::endl;
+}
+
+void glfw_input(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+		terminate(0);
+	}
 }
 
 int main(void) {
@@ -21,7 +37,7 @@ int main(void) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(1280, 720, "title :)", NULL, NULL);
+	window = glfwCreateWindow(1280, 720, "title :)", NULL, NULL);
 	if(!window) {
 		std::cout << "failed window initialization" << std::endl;
 		glfwTerminate();
@@ -29,6 +45,7 @@ int main(void) {
 	}
 
 	glfwMakeContextCurrent(window);
+	glfwSetKeyCallback(window, glfw_input);
 	glfwShowWindow(window);
 	glfwFocusWindow(window);
 
@@ -48,8 +65,6 @@ int main(void) {
 	glfwSwapInterval(1);
 
 	while(!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
-
 		glClearColor (0.5921, 0.5961, 0.5255, 1.0);
 		glClear (GL_COLOR_BUFFER_BIT);
 		glColor3f (1.0, 1.0, 1.0);
@@ -60,14 +75,14 @@ int main(void) {
 			glVertex3f (0.75, 0.75, 0.0);
 			glVertex3f (0.25, 0.75, 0.0);
 		glEnd();
-		glFlush();
+		//glFlush();
 
 		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
 
-	glfwDestroyWindow(window);
-	glfwTerminate();
+	terminate(0);
 
 	return 0;
 }
