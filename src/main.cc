@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include "shader.h"
+
 GLFWwindow* window = nullptr;
 
 
