@@ -64,6 +64,10 @@ Shader::Shader(const std::string& vsource, const std::string& fsource) {
 	glDeleteShader(fragmentShader);
 }
 
+
+Shader::Shader(const std::filesystem::path& vsource, const std::filesystem::path& fsource)
+    : Shader::Shader(vsource.string(), fsource.string()) { }
+
 Shader::~Shader() {
 	glDeleteProgram(this->id);
 }
@@ -89,5 +93,9 @@ void Shader::setInt(const std::string& name, int value) const {
 }
 
 void Shader::setFloat(const std::string& name, float value) const {
-	glUniform1i(glGetUniformLocation(this->id, name.c_str()), (int)value);
+	glUniform1f(glGetUniformLocation(this->id, name.c_str()), (float)value);
+}
+
+void Shader::setShader(const std::string& name, int location) const {
+	glUniform1i(glGetUniformLocation(this->id, name.c_str()), (int)location);
 }
