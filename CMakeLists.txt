@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.12)
 project(inversekin)
+cmake_minimum_required(VERSION 2.8.12)
 
 add_definitions("-std=c++17")
 
@@ -11,5 +11,6 @@ set(CMAKE_BUILD_TYPE Debug)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
+message( STATUS "included ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
 
 add_subdirectory(src)

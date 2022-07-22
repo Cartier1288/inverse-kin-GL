@@ -9,6 +9,7 @@
 
 GLFWwindow* window = nullptr;
 Shader* baseShader = nullptr;
+Shader* noiseShader = nullptr;
 
 
 void terminate(int code) {
@@ -17,6 +18,7 @@ void terminate(int code) {
 	glfwTerminate();
 
 	delete baseShader;
+	delete noiseShader;
 
 	exit(code);
 }
@@ -84,6 +86,7 @@ int main(void) {
 
 
 	baseShader = new Shader { SHADER_DIR / std::filesystem::path("base.vert"), SHADER_DIR / std::filesystem::path("base.frag") };
+	noiseShader = new Shader { SHADER_DIR / std::filesystem::path("base.vert"), SHADER_DIR / std::filesystem::path("noise.frag") };
 
 
 	/* -- vertices and their buffers ------------------- */
@@ -166,9 +169,12 @@ int main(void) {
 	baseShader->use();
 	baseShader->setShader("texture2d", 0);
 
+  int rwidth, rheight;
+
 	while(!glfwWindowShouldClose(window)) {
 
 		float time = glfwGetTime();
+    glfwGetWindowSize(window, &rwidth, &rheight);
 
 		glClearColor (0.5921, 0.5961, 0.5255, 1.0);
 		glClear (GL_COLOR_BUFFER_BIT);
@@ -182,6 +188,16 @@ int main(void) {
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+    noiseShader->use();
+		noiseShader->setFloat("time", time);
+    noiseShader->setVec2("WindowSize", rwidth, rheight);
+
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

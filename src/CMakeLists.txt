@@ -1,5 +1,7 @@
 include_directories(${inversekin_SOURCE_DIR}/include)
 
+message( STATUS "including ${inversekin_SOURCE_DIR}/include")
+
 # this is hacky, and means you cannot distribute the executable
 # could be wrapped with a DEBUG conditional so that it switches to 
 # relative dir when release.
