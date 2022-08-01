@@ -1,15 +1,21 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #include <filesystem>
 #include <math.h>
 
 #include "shader.h"
+#include "ik.h"
 
 GLFWwindow* window = nullptr;
 Shader* baseShader = nullptr;
 Shader* noiseShader = nullptr;
+Shader* ikShader = nullptr;
 
 
 void terminate(int code) {
@@ -19,6 +25,7 @@ void terminate(int code) {
 
 	delete baseShader;
 	delete noiseShader;
+  delete ikShader;
 
 	exit(code);
 }
@@ -73,7 +80,7 @@ int main(void) {
 
 	glfwSwapInterval(1);
 
-    std::cout << std::filesystem::current_path() << std::endl;
+  std::cout << std::filesystem::current_path() << std::endl;
 	std::cout << "ROOT_DIR: " << ROOT_DIR << std::endl;
 	std::cout << "RESOURCE_DIR: " << RESOURCE_DIR << std::endl;
 	std::cout << "SHADER_DIR: " << SHADER_DIR << std::endl;
@@ -87,14 +94,15 @@ int main(void) {
 
 	baseShader = new Shader { SHADER_DIR / std::filesystem::path("base.vert"), SHADER_DIR / std::filesystem::path("base.frag") };
 	noiseShader = new Shader { SHADER_DIR / std::filesystem::path("base.vert"), SHADER_DIR / std::filesystem::path("noise.frag") };
+	ikShader = new Shader { SHADER_DIR / std::filesystem::path("ik.vert"), SHADER_DIR / std::filesystem::path("ik.frag") };
 
 
 	/* -- vertices and their buffers ------------------- */
 	float vertices[] = {
-		-1.0, -1.0,  0.0, 0.0,
-		-1.0,  1.0,  0.0, 1.0,
-		 1.0,  1.0,  1.0, 1.0,
-		 1.0, -1.0,  1.0, 0.0
+		-1.0, -1.0,  0.0,  0.0, 0.0,
+		-1.0,  1.0,  0.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0,  1.0, 1.0,
+		 1.0, -1.0,  0.0,  1.0, 0.0
 	};
 	unsigned int indices[] = {
 		0, 1, 2,
@@ -114,10 +122,10 @@ int main(void) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -167,9 +175,49 @@ int main(void) {
 	delete[] data;
 
 	baseShader->use();
-	baseShader->setShader("texture2d", 0);
+  glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 1000.0f);
+  glm::mat4 view = glm::mat4(1.0f);
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+  glm::mat4 model = glm::mat4(1.0f);
+  //model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+  baseShader->setMat4("projection", projection);
+  baseShader->setMat4("view", view);
+  baseShader->setMat4("model", model);
+	baseShader->setTexture("texture2d", 0);
+
+  noiseShader->use();
+  noiseShader->setMat4("projection", projection);
+  noiseShader->setMat4("view", view);
+  noiseShader->setMat4("model", model);
+	noiseShader->setTexture("texture2d", 0);
+
+  ikShader->use();
+  ikShader->setMat4("projection", projection);
+  ikShader->setMat4("view", view);
+  model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
+  ikShader->setMat4("model", model);
+	ikShader->setTexture("texture2d", 0);
+  
 
   int rwidth, rheight;
+
+
+  // inverse kinematics
+  ik::chain c{std::vector<ik::joint>{
+    ik::joint{ik::vec3{0.0, 0.0, 0.0}},
+    ik::joint{ik::vec3{0.5, 0.5, 0.0}},
+    ik::joint{ik::vec3{1.0, 0.45, 0.0}},
+  }};
+  
+  std::cout << c.size() << std::endl;
+  std::cout << c.length() << std::endl;
+
+  ik::FABRIK f{c, ik::joint{ik::vec3{2.0, 2.0, 0.0}}};
+
+  for(int i = 0; i < 100; i++) {
+    //f.iterate();
+    //std::cout << f.c << std::endl;
+  }
 
 	while(!glfwWindowShouldClose(window)) {
 
@@ -198,6 +246,20 @@ int main(void) {
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
+    ikShader->use();
+		ikShader->setFloat("time", time);
+
+    for(size_t i = 0; i < f.c.size(); i++) {
+      ikShader->setVec3("offset[" + std::to_string(i) + "]", glm::vec3{
+        10 * f.c[i].pos.x,
+        10 * f.c[i].pos.y,
+        10 * f.c[i].pos.z
+      });
+    }
+
+		glBindVertexArray(VAO);
+		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 3);
+        
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

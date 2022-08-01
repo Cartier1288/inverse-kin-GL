@@ -9,11 +9,13 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 
+uniform vec3 offset[3];
+
 out float timef;
 out vec2 texCoord;
 
 void main() {
-    gl_Position = projection * view * model * vec4(pos, 1.0);
+    gl_Position = projection * view * model * vec4(pos+offset[gl_InstanceID], 1.0);
     timef = time;
     texCoord = texCoordIn;
 }

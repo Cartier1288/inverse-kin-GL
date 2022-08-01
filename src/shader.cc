@@ -96,10 +96,18 @@ void Shader::setFloat(const std::string& name, float value) const {
 	glUniform1f(glGetUniformLocation(this->id, name.c_str()), (float)value);
 }
 
-void Shader::setShader(const std::string& name, int location) const {
-	glUniform1i(glGetUniformLocation(this->id, name.c_str()), (int)location);
-}
-
 void Shader::setVec2(const std::string& name, float x, float y) const {
   glUniform2f(glGetUniformLocation(this->id, name.c_str()), x, y);
+}
+
+void Shader::setVec3(const std::string& name, const glm::vec3& v) const {
+  glUniform3fv(glGetUniformLocation(this->id, name.c_str()), 1, &v[0]);
+}
+
+void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const {
+  glUniformMatrix4fv(glGetUniformLocation(this->id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void Shader::setTexture(const std::string& name, int location) const {
+	glUniform1i(glGetUniformLocation(this->id, name.c_str()), (int)location);
 }

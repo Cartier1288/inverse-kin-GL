@@ -16,6 +16,12 @@ void main() {
     float z = rand(gl_FragCoord.xy);
     float x = gl_FragCoord.x - WindowSize.x/2;
     float y = gl_FragCoord.y - WindowSize.y/2;
+    
     z = sin(sqrt(x*x+y*y)/5-timef*40);
+ 
     color = vec4(z,z,z,0.9);
+
+    z = z * 0.025;
+    vec2 disUV = vec2(texCoord.x + z, texCoord.y + z);
+    color = texture(texture2d, disUV);
 }
