@@ -110,22 +110,20 @@ namespace ik {
     bool reachable = dist(this->c[0].pos, this->target.pos) <= this->c.length();
     if(reachable) {
       joint base = this->c[0];
+      this->c.set_joint(this->c.size()-1, t);
       
       joint pp = t;
       // forward reaching
-      for(size_t i = this->c.size()-1; i >= 1; i--) {
-        i -= 1;
+      for(size_t i = this->c.size()-2; i >= 0; i--) {
         double r = dist(pp.pos, this->c[i].pos);
         double m = this->c.get_distance(i) / r;
 
         this->c.set_joint(i+1, pp);
         pp = joint{(1-m)*pp.pos + m*this->c[i].pos};
-        i += 1;
       }
       this->c.set_joint(0,pp);
       this->c.set_joint(0,base);
- 
-      // backward reaching     
+      
       for(size_t i = 0; i < this->c.size()-1; i++) {
         
       }

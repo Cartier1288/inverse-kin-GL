@@ -212,12 +212,15 @@ int main(void) {
   std::cout << c.size() << std::endl;
   std::cout << c.length() << std::endl;
 
-  ik::FABRIK f{c, ik::joint{ik::vec3{2.0, 2.0, 0.0}}};
+  ik::joint target = ik::joint{ik::vec3{-0.8, -0.5, 0.0}};
+  ik::FABRIK f{c, target};
 
   for(int i = 0; i < 100; i++) {
     //f.iterate();
     //std::cout << f.c << std::endl;
   }
+
+  float lastIt = glfwGetTime();
 
 	while(!glfwWindowShouldClose(window)) {
 
@@ -248,6 +251,7 @@ int main(void) {
 
     ikShader->use();
 		ikShader->setFloat("time", time);
+    ikShader->setVec4("JointColor", glm::vec4{0.0, 0.0, 0.0, 1.0});
 
     for(size_t i = 0; i < f.c.size(); i++) {
       ikShader->setVec3("offset[" + std::to_string(i) + "]", glm::vec3{
@@ -259,7 +263,24 @@ int main(void) {
 
 		glBindVertexArray(VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 3);
-        
+
+    // draw target    
+    ikShader->setVec4("JointColor", glm::vec4{1.0, 0.0, 0.0, 1.0});
+    ikShader->setVec3("offset[0]", glm::vec3{
+      10 * target.pos.x,
+      10 * target.pos.y,
+      10 * target.pos.z
+    });
+
+		glBindVertexArray(VAO);
+		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 1);
+
+
+    if(time - lastIt >= 0.5f) {
+      f.iterate();
+      lastIt = time;
+    }
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

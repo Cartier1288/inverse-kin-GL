@@ -32,7 +32,7 @@ namespace ik {
 
     friend std::ostream& operator<<(std::ostream&, const chain&);
     const joint& operator[](size_t i) const;
-
+    
     size_t size() const;
     double length() const;
 
@@ -45,7 +45,7 @@ namespace ik {
 
   struct FABRIK {
     chain c;
-    const joint& target;
+    joint target;
 
     FABRIK(const chain& start, const joint& end);
 
