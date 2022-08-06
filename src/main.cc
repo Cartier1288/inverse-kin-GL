@@ -35,7 +35,7 @@ void glfw_error(int error, const char* description) {
 }
 
 void glfw_input(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+	if((key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q) && action == GLFW_PRESS) {
 		terminate(0);
 	}
 }
@@ -207,12 +207,13 @@ int main(void) {
     ik::joint{ik::vec3{0.0, 0.0, 0.0}},
     ik::joint{ik::vec3{0.5, 0.5, 0.0}},
     ik::joint{ik::vec3{1.0, 0.45, 0.0}},
+    ik::joint{ik::vec3{0.8, -0.25, 0.0}},
   }};
   
   std::cout << c.size() << std::endl;
   std::cout << c.length() << std::endl;
 
-  ik::joint target = ik::joint{ik::vec3{-0.8, -0.5, 0.0}};
+  ik::joint target = ik::joint{ik::vec3{-0.8, -0.1, 0.0}};
   ik::FABRIK f{c, target};
 
   for(int i = 0; i < 100; i++) {
@@ -261,22 +262,30 @@ int main(void) {
       });
     }
 
+    model = glm::scale(glm::mat4(1.0), glm::vec3(0.05f, 0.05f, 0.05f));
+    ikShader->setMat4("model", model);
+
 		glBindVertexArray(VAO);
-		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 3);
+		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, f.c.size());
+
 
     // draw target    
     ikShader->setVec4("JointColor", glm::vec4{1.0, 0.0, 0.0, 1.0});
     ikShader->setVec3("offset[0]", glm::vec3{
-      10 * target.pos.x,
-      10 * target.pos.y,
-      10 * target.pos.z
+      20 * target.pos.x,
+      20 * target.pos.y,
+      20 * target.pos.z
     });
 
-		glBindVertexArray(VAO);
+    model = glm::scale(glm::mat4(1.0), glm::vec3(0.025f, 0.025f, 0.025f));
+    ikShader->setMat4("model", model);
+		
+    glBindVertexArray(VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 1);
 
 
     if(time - lastIt >= 0.5f) {
+      std::cout << f.c << std::endl;
       f.iterate();
       lastIt = time;
     }

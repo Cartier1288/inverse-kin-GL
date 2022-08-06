@@ -113,7 +113,7 @@ namespace ik {
       
       joint pp = t;
       // forward reaching
-      for(size_t i = this->c.size()-1; i >= 1; i--) {
+      for(size_t i = this->c.size()-1; i > 0; i--) {
         i -= 1;
         double r = dist(pp.pos, this->c[i].pos);
         double m = this->c.get_distance(i) / r;
@@ -123,12 +123,17 @@ namespace ik {
         i += 1;
       }
       this->c.set_joint(0,pp);
-      this->c.set_joint(0,base);
  
+      pp = base;
       // backward reaching     
       for(size_t i = 0; i < this->c.size()-1; i++) {
-        
+        double r = dist(pp.pos, this->c[i+1].pos);
+        double m = this->c.get_distance(i) / r;
+
+        this->c.set_joint(i, pp);
+        pp = joint{(1-m)*pp.pos + m*this->c[i+1].pos};
       }
+      this->c.set_joint(this->c.size()-1, pp);
     }
     else {
       for(size_t i = 0; i < this->c.size()-1; i++) {
