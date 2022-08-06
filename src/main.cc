@@ -16,6 +16,7 @@ GLFWwindow* window = nullptr;
 Shader* baseShader = nullptr;
 Shader* noiseShader = nullptr;
 Shader* ikShader = nullptr;
+Shader* lineShader = nullptr;
 
 
 void terminate(int code) {
@@ -26,6 +27,7 @@ void terminate(int code) {
 	delete baseShader;
 	delete noiseShader;
   delete ikShader;
+  delete lineShader;
 
 	exit(code);
 }
@@ -95,6 +97,7 @@ int main(void) {
 	baseShader = new Shader { SHADER_DIR / std::filesystem::path("base.vert"), SHADER_DIR / std::filesystem::path("base.frag") };
 	noiseShader = new Shader { SHADER_DIR / std::filesystem::path("base.vert"), SHADER_DIR / std::filesystem::path("noise.frag") };
 	ikShader = new Shader { SHADER_DIR / std::filesystem::path("ik.vert"), SHADER_DIR / std::filesystem::path("ik.frag") };
+	lineShader = new Shader { SHADER_DIR / std::filesystem::path("lines.vert"), SHADER_DIR / std::filesystem::path("lines.frag") };
 
 
 	/* -- vertices and their buffers ------------------- */
@@ -198,6 +201,13 @@ int main(void) {
   ikShader->setMat4("model", model);
 	ikShader->setTexture("texture2d", 0);
   
+  lineShader->use();
+  lineShader->setMat4("projection", projection);
+  lineShader->setMat4("view", view);
+  model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
+  lineShader->setMat4("model", model);
+	lineShader->setTexture("texture2d", 0);
+  
 
   int rwidth, rheight;
 
@@ -213,7 +223,7 @@ int main(void) {
   std::cout << c.size() << std::endl;
   std::cout << c.length() << std::endl;
 
-  ik::joint target = ik::joint{ik::vec3{-0.8, -0.1, 0.0}};
+  ik::joint target = ik::joint{ik::vec3{-0.8, -0.85, 0.0}};
   ik::FABRIK f{c, target};
 
   for(int i = 0; i < 100; i++) {
@@ -248,6 +258,26 @@ int main(void) {
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    lineShader->use();
+		lineShader->setFloat("time", time);
+    lineShader->setVec4("JointColor", glm::vec4{0.0, 0.0, 0.0, 1.0});
+    lineShader->setFloat("WIDTH", rwidth);
+    lineShader->setFloat("HEIGHT", rheight);
+
+    for(size_t i = 0; i < f.c.size(); i++) {
+      lineShader->setVec3("offset[" + std::to_string(i) + "]", glm::vec3{
+        f.c[i].pos.x,
+        f.c[i].pos.y,
+        f.c[i].pos.z
+      });
+    }
+
+    model = glm::scale(glm::mat4(1.0), glm::vec3(0.173f, 0.173f, 0.173f));
+    lineShader->setMat4("model", model);
+
+		glBindVertexArray(VAO);
+		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, f.c.size()-1);
 
 
     ikShader->use();
@@ -285,7 +315,6 @@ int main(void) {
 
 
     if(time - lastIt >= 0.5f) {
-      std::cout << f.c << std::endl;
       f.iterate();
       lastIt = time;
     }
