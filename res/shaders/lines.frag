@@ -29,5 +29,6 @@ void main() {
   vec2 bottomLeft = vec2(min(v1.x,v2.x), v1.y - stroke);
   vec2 topRight = vec2(max(v1.x,v2.x), v1.y + stroke);
 
-  color = JointColor * insideBox(p.xy, bottomLeft, topRight);
+  float N = instanceN + smoothstep(0.0,1.0,abs((p.x-v1.x)/(v2.x-v1.x)));
+  color = vec4(0.2,abs(sin(N/2))/2.0,0.2,1.0) * insideBox(p.xy, bottomLeft, topRight);
 }
