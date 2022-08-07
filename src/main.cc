@@ -223,7 +223,8 @@ int main(void) {
   std::cout << c.size() << std::endl;
   std::cout << c.length() << std::endl;
 
-  ik::joint target = ik::joint{ik::vec3{-0.8, -0.85, 0.0}};
+  //ik::joint target = ik::joint{ik::vec3{-0.8, -0.85, 0.0}};
+  ik::joint target = ik::joint{ik::vec3{-3.0, 0.2, 0.0}};
   ik::FABRIK f{c, target};
 
   for(int i = 0; i < 100; i++) {
@@ -232,6 +233,8 @@ int main(void) {
   }
 
   float lastIt = glfwGetTime();
+  float lastRot = glfwGetTime();
+  float R = 1.8;
 
 	while(!glfwWindowShouldClose(window)) {
 
@@ -302,9 +305,9 @@ int main(void) {
     // draw target    
     ikShader->setVec4("JointColor", glm::vec4{1.0, 0.0, 0.0, 1.0});
     ikShader->setVec3("offset[0]", glm::vec3{
-      20 * target.pos.x,
-      20 * target.pos.y,
-      20 * target.pos.z
+      20 * f.target.pos.x,
+      20 * f.target.pos.y,
+      20 * f.target.pos.z
     });
 
     model = glm::scale(glm::mat4(1.0), glm::vec3(0.025f, 0.025f, 0.025f));
@@ -314,10 +317,14 @@ int main(void) {
 		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 1);
 
 
-    if(time - lastIt >= 0.5f) {
+    if(time - lastIt >= 0.02f) {
       f.iterate();
       lastIt = time;
     }
+	if(time - lastRot >= 0.01f) {
+      f.target = ik::joint{ik::vec3{(R+sin(time*4.0))*cos(time), (R+sin(time*4.0))*sin(time), 0.0}};
+      lastRot = time;
+	}
 
 
 		glfwSwapBuffers(window);

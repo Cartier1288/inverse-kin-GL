@@ -1,6 +1,8 @@
 #include "ik.h"
 #include <cmath>
 
+#define IK_THRESHOLD 0.0001
+
 namespace ik {
 
   vec3 operator+(const vec3& v1, const vec3& v2) {
@@ -35,6 +37,7 @@ namespace ik {
     for(size_t i = 0; i < c.size(); i++) {
       const vec3& p = c.joints[i].pos;
       s << "(" << p.x << ", " << p.y << ", " << p.z << "), ";
+      if(i < c.size()-1) s << c.d[i] << ", ";
     }
     s << " }";
 
@@ -107,43 +110,48 @@ namespace ik {
   void FABRIK::iterate() {
     joint t = this->target;
 
-    bool reachable = dist(this->c[0].pos, this->target.pos) <= this->c.length();
-    if(reachable) {
-      joint base = this->c[0];
-      
-      joint pp = t;
-      // forward reaching
-      for(size_t i = this->c.size()-1; i > 0; i--) {
-        i -= 1;
-        double r = dist(pp.pos, this->c[i].pos);
-        double m = this->c.get_distance(i) / r;
+    if(dist(this->c[this->c.size()-1].pos, t.pos) > IK_THRESHOLD) {
+      bool reachable = dist(this->c[0].pos, this->target.pos) <= this->c.length();
+      if(reachable) {
+        joint base = this->c[0];
+        joint pp = t;
+        // forward reaching
+        for(size_t i = this->c.size()-1; i > 0; i--) {
+          i -= 1;
+          double r = dist(pp.pos, this->c[i].pos);
+          double m = this->c.get_distance(i) / r;
 
-        this->c.set_joint(i+1, pp);
-        pp = joint{(1-m)*pp.pos + m*this->c[i].pos};
-        i += 1;
+          this->c.set_joint(i+1, pp);
+          pp = joint{(1-m)*pp.pos + m*this->c[i].pos};
+          i += 1;
+        }
+        this->c.set_joint(0,pp);
+
+        pp = base;
+        // backward reaching     
+        for(size_t i = 0; i < this->c.size()-1; i++) {
+          double r = dist(pp.pos, this->c[i+1].pos);
+          double m = this->c.get_distance(i) / r;
+
+          this->c.set_joint(i, pp);
+          pp = joint{(1-m)*pp.pos + m*this->c[i+1].pos};
+        }
+        this->c.set_joint(this->c.size()-1, pp);
       }
-      this->c.set_joint(0,pp);
- 
-      pp = base;
-      // backward reaching     
-      for(size_t i = 0; i < this->c.size()-1; i++) {
-        double r = dist(pp.pos, this->c[i+1].pos);
-        double m = this->c.get_distance(i) / r;
+      else {
+        // since we update distances whenever we change a joint, we need to keep
+        // an old copy of the distances or else our updates will change the distances
+        // for the calculation.
+        chain oldc = this->c;
+        for(size_t i = 0; i < this->c.size()-1; i++) {
+          double r = dist(t.pos, this->c.get_joint(i).pos);
+          double m = oldc.get_distance(i) / r;
 
-        this->c.set_joint(i, pp);
-        pp = joint{(1-m)*pp.pos + m*this->c[i+1].pos};
-      }
-      this->c.set_joint(this->c.size()-1, pp);
-    }
-    else {
-      for(size_t i = 0; i < this->c.size()-1; i++) {
-        double r = dist(t.pos, this->c.get_joint(i).pos);
-        double m = this->c.get_distance(i) / r;
-
-        this->c.set_joint(i+1, joint{(1 - m)*this->c.get_joint(i).pos + m*t.pos});
-        //t = this->c.get_joint(i); // not the greatest since this is a copy, and
-                                  // really only needs to be a pointer/ref but
-                                  // wtv for now ...
+          this->c.set_joint(i+1, joint{(1 - m)*this->c.get_joint(i).pos + m*t.pos});
+          //t = this->c.get_joint(i); // not the greatest since this is a copy, and
+                                    // really only needs to be a pointer/ref but
+                                    // wtv for now ...
+        }
       }
     }
   }
